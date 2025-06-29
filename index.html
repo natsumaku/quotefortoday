@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote For Today</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        /* --- Cài đặt chung --- */
+        :root {
+            --background-color: #fdfdfd;
+            --text-color: #333;
+            --primary-color: #2c3e50;
+            --secondary-color: #7f8c8d;
+            --container-bg: #ffffff;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* --- Bố cục chính --- */
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem 2.5rem 3rem 2.5rem;
+            background: var(--container-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        /* --- Phần Header --- */
+        header {
+            text-align: right;
+        }
+        
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .date {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            color: var(--secondary-color);
+            margin-bottom: 2.5rem;
+        }
+
+        /* --- Phần Quote --- */
+        .quote-container {
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            border-left: 4px solid #e0e0e0;
+            padding-left: 2rem;
+            padding-right: 1rem;
+        }
+
+        .loading {
+            align-self: center;
+            font-style: italic;
+            color: var(--secondary-color);
+        }
+
+        #quote-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-style: italic;
+            line-height: 1.6;
+            margin: 0;
+            color: #222; /* Màu mặc định */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out, color 0.3s ease;
+            white-space: pre-line;
+        }
+
+        #quote-author {
+            display: block;
+            margin-top: 1.5rem;
+            font-weight: 400;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--primary-color);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s;
+            align-self: flex-end;
+        }
+
+        #quote-author::before {
+            content: "— ";
+        }
+
+        /* --- Hiển thị khi đã tải xong --- */
+        .loaded #quote-text,
+        .loaded #quote-author,
+        .loaded .actions-container {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* --- Bảng màu & Actions --- */
+        .actions-container {
+            width: 100%;
+            margin-top: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .color-palette {
+            display: flex;
+            justify-content: flex-start;
+            gap: 1rem;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: var(--primary-color);
+            transform: scale(1.15);
+        }
+
+        .mark-as-read-control {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+        
+        .mark-as-read-control input[type="checkbox"] {
+            display: none;
+        }
+
+        .mark-as-read-control .custom-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            display: inline-block;
+            position: relative;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .mark-as-read-control .custom-checkbox::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 1px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .mark-as-read-control input:checked + .custom-checkbox {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .mark-as-read-control input:checked + .custom-checkbox::after {
+            opacity: 1;
+        }
+        
+        .hidden {
+            display: none;
+        }
+
+        #reset-read-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #reset-read-btn:hover {
+            background-color: #3a536e;
+        }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 3rem;
+            font-size: 0.9rem;
+            color: #bdc3c7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Quote For Today</h1>
+            <p class="date"></p>
+        </header>
+        <main class="quote-container">
+            <p class="loading">Finding a great quote...</p>
+            <blockquote id="quote-text"></blockquote>
+            <cite id="quote-author"></cite>
+            
+            <div id="all-read-message" class="hidden">
+                <p>You've read all the quotes! 🎉</p>
+                <button id="reset-read-btn">Reset and start over</button>
+            </div>
+
+            <div class="actions-container">
+                <div class="color-palette" id="color-palette">
+                    <span class="color-option" data-color="#222" style="background-color: #222;"></span>
+                    <span class="color-option" data-color="#c0392b" style="background-color: #c0392b;"></span>
+                    <span class="color-option" data-color="#2980b9" style="background-color: #2980b9;"></span>
+                    <span class="color-option" data-color="#27ae60" style="background-color: #27ae60;"></span>
+                    <span class="color-option" data-color="#8e44ad" style="background-color: #8e44ad;"></span>
+                </div>
+                <label class="mark-as-read-control">
+                    <input type="checkbox" id="mark-as-read-checkbox">
+                    <span class="custom-checkbox"></span>
+                    Mark as read
+                </label>
+            </div>
+        </main>
+        <footer>
+            <p>A product by You & Gemini</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const googleSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYedrNHABCpg9vavk3IN1LHur0O58RvTaS-41lRHlTJwO472pTr-GGCnqFCO_Ddf5U_RyNCMGnEG1X/pub?output=csv';
+            
+            const quoteTextElem = document.getElementById('quote-text');
+            const quoteAuthorElem = document.getElementById('quote-author');
+            const loadingElem = document.querySelector('.loading');
+            const dateElem = document.querySelector('.date');
+            const quoteContainer = document.querySelector('.quote-container');
+            const colorPalette = document.getElementById('color-palette');
+            const markAsReadCheckbox = document.getElementById('mark-as-read-checkbox');
+            const allReadMessage = document.getElementById('all-read-message');
+            const resetReadBtn = document.getElementById('reset-read-btn');
+            const actionsContainer = document.querySelector('.actions-container');
+
+            let currentQuote = null;
+
+            const today = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElem.textContent = today.toLocaleDateString('en-US', dateOptions);
+
+            async function getQuoteOfTheDay() {
+                try {
+                    loadingElem.classList.remove('hidden');
+                    actionsContainer.classList.add('hidden');
+                    allReadMessage.classList.add('hidden');
+                    quoteTextElem.textContent = '';
+                    quoteAuthorElem.textContent = '';
+
+                    const response = await fetch(googleSheetCsvUrl);
+                    if (!response.ok) throw new Error(`Network error: ${response.status}`);
+                    
+                    const csvText = await response.text();
+                    const allQuotes = parseCSV(csvText);
+                    const readQuotes = getReadQuotes();
+
+                    const unreadQuotes = allQuotes.filter(q => {
+                        const quoteText = Object.values(q)[1] || '';
+                        return quoteText && !readQuotes.includes(quoteText);
+                    });
+
+                    if (unreadQuotes.length === 0) {
+                        displayAllReadMessage();
+                        return;
+                    }
+
+                    const randomIndex = Math.floor(Math.random() * unreadQuotes.length);
+                    
+                    currentQuote = unreadQuotes[randomIndex];
+                    displayQuote(currentQuote);
+
+                } catch (error) {
+                    console.error("An error occurred:", error);
+                    displayError("Sorry, couldn't load a quote. Please check the Google Sheet link.");
+                }
+            }
+            
+            function parseCSV(text) {
+                const rows = [];
+                let currentRow = [];
+                let currentField = '';
+                let inQuotes = false;
+                text = text.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n') + '\n';
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    if (inQuotes) {
+                        if (char === '"' && text[i + 1] === '"') { currentField += '"'; i++; } 
+                        else if (char === '"') { inQuotes = false; } 
+                        else { currentField += char; }
+                    } else {
+                        if (char === '"') { inQuotes = true; } 
+                        else if (char === ',') { currentRow.push(currentField); currentField = ''; } 
+                        else if (char === '\n') { currentRow.push(currentField); rows.push(currentRow); currentRow = []; currentField = ''; } 
+                        else { currentField += char; }
+                    }
+                }
+                if (rows.length < 2) return [];
+                const headers = rows.shift().map(h => h.trim());
+                return rows.map(row => {
+                    if (row.length === 1 && row[0].trim() === '') return null;
+                    const obj = {};
+                    headers.forEach((header, i) => { obj[header] = row[i] || ''; });
+                    return obj;
+                }).filter(Boolean);
+            }
+
+            function displayQuote(quote) {
+                loadingElem.classList.add('hidden');
+                actionsContainer.classList.remove('hidden');
+                markAsReadCheckbox.checked = false;
+                
+                const values = Object.values(quote);
+                const fullQuote = values[1] || '';
+                const author = values[2] || "Anonymous";
+
+                quoteTextElem.textContent = fullQuote;
+                quoteAuthorElem.textContent = author;
+                quoteContainer.classList.add('loaded');
+            }
+
+            function displayError(message) {
+                loadingElem.textContent = message;
+                loadingElem.style.color = '#e74c3c';
+            }
+            
+            function displayAllReadMessage() {
+                loadingElem.classList.add('hidden');
+                quoteTextElem.textContent = '';
+                quoteAuthorElem.textContent = '';
+                actionsContainer.classList.add('hidden');
+                allReadMessage.classList.remove('hidden');
+            }
+
+            // --- Chức năng "Đã đọc" ---
+            function getReadQuotes() {
+                return JSON.parse(localStorage.getItem('readQuotes') || '[]');
+            }
+
+            function markCurrentQuoteAsRead() {
+                if (!currentQuote) return;
+                const readQuotes = getReadQuotes();
+                const quoteText = Object.values(currentQuote)[1] || '';
+                if (quoteText && !readQuotes.includes(quoteText)) {
+                    readQuotes.push(quoteText);
+                    localStorage.setItem('readQuotes', JSON.stringify(readQuotes));
+                }
+                getQuoteOfTheDay();
+            }
+
+            markAsReadCheckbox.addEventListener('change', () => {
+                if (markAsReadCheckbox.checked) {
+                    markCurrentQuoteAsRead();
+                }
+            });
+
+            resetReadBtn.addEventListener('click', () => {
+                localStorage.removeItem('readQuotes');
+                window.location.reload();
+            });
+
+            // --- Chức năng đổi màu ---
+            function setupColorPalette() {
+                colorPalette.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('color-option')) {
+                        const newColor = e.target.dataset.color;
+                        applyColor(newColor);
+                        localStorage.setItem('quoteColor', newColor);
+                    }
+                });
+            }
+
+            function applyColor(color) {
+                quoteTextElem.style.color = color;
+                colorPalette.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.color === color) {
+                        option.classList.add('active');
+                    }
+                });
+            }
+
+            function loadSavedColor() {
+                const savedColor = localStorage.getItem('quoteColor');
+                applyColor(savedColor || '#222');
+            }
+
+            // --- Khởi chạy ---
+            getQuoteOfTheDay();
+            setupColorPalette();
+            loadSavedColor();
+        });
+    </script>
+</body>
+</html>
